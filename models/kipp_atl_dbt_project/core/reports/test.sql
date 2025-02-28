@@ -13,7 +13,6 @@
      select 1 as ident
      union all
      select null as ident
-
  )
 
  select *
