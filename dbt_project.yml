@@ -19,18 +19,42 @@ clean-targets:
 models:
   kipp_atl_dbt_project:
     +schema: "{{ 'atl_analytics' if target.name == 'prod' else 'dbt_' ~ target.user }}"
+    pre-hook:
+      - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'START');"
+    post-hook:
+      - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'SUCCESS');"
+      - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.post_model_metrics` (model_name, final_row_count, run_at) SELECT '{{ this.name }}', COUNT(*), CURRENT_TIMESTAMP() FROM {{ this }};"
     staging:
       +schema: "{{ 'prod_staging' if target.name == 'prod' else 'dbt_' ~ target.user }}"
       +materialized: view
-    intermediate:
-      +schema: intermediate
-      +materialized: view
-    dimensional:
-      +schema: dim_fct
-      +materialized: table
-    reporting:
-      +schema: reporting
-      +materialized: table
+      pre-hook:
+        - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'START');"
+      post-hook:
+        - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'SUCCESS');"
+        - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.post_model_metrics` (model_name, final_row_count, run_at) SELECT '{{ this.name }}', COUNT(*) FROM `{{ this }}`, CURRENT_TIMESTAMP();"
+    core:
+      +schema: "{{ 'atl_analytics' if target.name == 'prod' else 'dbt_' ~ target.user }}"
+      pre-hook:
+        - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'START');"
+      post-hook:
+        - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'SUCCESS');"
+        - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.post_model_metrics` (model_name, final_row_count, run_at) SELECT '{{ this.name }}', COUNT(*), CURRENT_TIMESTAMP() FROM {{ this }};"
+      intermediate:
+        +schema: "{{ 'atl_analytics' if target.name == 'prod' else 'dbt_' ~ target.user }}"
+        +materialized: view
+        pre-hook:
+          - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'START');"
+        post-hook:
+          - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'SUCCESS');"
+          - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.post_model_metrics` (model_name, final_row_count, run_at) SELECT '{{ this.name }}', COUNT(*), CURRENT_TIMESTAMP() FROM {{ this }};"
+      reports:
+        +schema: "{{ 'atl_analytics' if target.name == 'prod' else 'dbt_' ~ target.user }}"
+        +materialized: table
+        pre-hook:
+          - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'START');"
+        post-hook:
+          - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.dbt_audit_log` (model_name, run_at, run_by, action) VALUES ('{{ this.name }}', CURRENT_TIMESTAMP(), SESSION_USER(), 'SUCCESS');"
+          - "INSERT INTO `cobalt-tangerine-309314.dbt_logs.post_model_metrics` (model_name, final_row_count, run_at) SELECT '{{ this.name }}', COUNT(*), CURRENT_TIMESTAMP() FROM {{ this }};"
 
 
 seeds:
